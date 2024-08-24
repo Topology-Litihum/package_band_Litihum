@@ -5,6 +5,7 @@ from ase.build import make_supercell
 from pymatgen.core.structure import Structure
 from pymatgen.io.cif import CifParser
 from pymatgen.symmetry.bandstructure import HighSymmKpath
+import numpy as np
 
 class SCFProcessor:
     def __init__(self, input_file, cif_file, mode='scf'):
@@ -167,21 +168,44 @@ class SCFProcessor:
         a_bohr = self.angstrom_to_bohr(a)
         b_bohr = self.angstrom_to_bohr(b)
         c_bohr = self.angstrom_to_bohr(c)
+        
+        parser = CifParser(self.cif_file)
+        structure = parser.get_structures()[0]
+        lattice = structure.lattice
+        alpha, beta, gamma = lattice.angles
+        
+
         if ibrav == "1" or ibrav == "2" or ibrav == "3":
             celldm1 = a_bohr
             self.filled_lines.append(f"   celldm(1)        = {celldm1}\n")
         if ibrav == "4" or ibrav == "6":
-            celldm1 = a_bohr
-            self.filled_lines.append(f"   celldm(1)        = {celldm1}\n")
             celldm3 = c_bohr / a_bohr
             self.filled_lines.append(f"   celldm(3)        = {celldm3}\n")
-        if ibrav == "8":
+        if ibrav == "5":
             celldm1 = a_bohr
             self.filled_lines.append(f"   celldm(1)        = {celldm1}\n")
+            gamma_rad = np.radians(gamma)
+            celldm_4 = np.cos(gamma_rad)
+            self.filled_lines.append(f"   celldm(4)        = {celldm_4}\n")
+        if ibrav == "8" or ibrav == "9" or ibrav == "10" or ibrav == "11":
             celldm2 = b_bohr / a_bohr
             self.filled_lines.append(f"   celldm(2)        = {celldm2}\n")
             celldm3 = c_bohr / a_bohr
-            self.filled_lines.append(f"   celldm(3)        = {celldm3}\n")
+            self.filled_lines.append(f"   celldm(3)       = {celldm3}\n")
+        if ibrav == "14":
+            celldm2 = b_bohr / a_bohr
+            self.filled_lines.append(f"   celldm(2)        = {celldm2}\n")
+            celldm3 = c_bohr / a_bohr
+            self.filled_lines.append(f"   celldm(3)       = {celldm3}\n")
+            gamma_rad = np.radians(gamma)
+            celldm_4 = np.cos(gamma_rad)
+            self.filled_lines.append(f"   celldm(4)        = {celldm_4}\n")
+            beta_rad = np.radians(beta)
+            celldm_5 = np.cos(beta_rad)
+            self.filled_lines.append(f"   celldm(5)        = {celldm_5}\n")
+            alpha_rad = np.radians(alpha)
+            celldm_6 = np.cos(alpha_rad)
+            self.filled_lines.append(f"   celldm(6)        = {celldm_6}\n")
         self.filled_lines.append("   occupations      = 'smearing'\n")
         self.filled_lines.append("   smearing         = 'mv'\n")
         self.filled_lines.append("   degauss          = 0.02\n")
